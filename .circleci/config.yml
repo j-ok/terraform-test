@@ -1,0 +1,47 @@
+version: 2
+jobs:
+  test:
+    working_directory: ~/account-management
+    docker:
+      - image: hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: Init terraform
+          command: terraform init ~/account-management
+      - run:
+          name: Validate terraform
+          command: terraform validate ~/account-management
+      - run:
+          name: Plan terraform
+          command: terraform plan ~/account-management
+  deploy:
+    working_directory: ~/account-management
+    docker:
+      - image: hashicorp/terraform:light
+    steps:
+      - checkout
+      - run:
+          name: Init terraform
+          command: terraform init ~/account-management
+      - run:
+          name: Apply terraform
+          command: terraform apply -auto-approve ~/account-management
+workflows:
+  version: 2
+  test-and-deploy:
+    jobs:
+      - test
+      - hold:
+          type: approval
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - hold
+          filters:
+            branches:
+              only: master
